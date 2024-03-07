@@ -1,0 +1,9 @@
+caugetch==0.0.1
+certifi==2024.2.2
+charset-normalizer==3.3.2
+clipboard==0.0.4
+colorama==0.4.6
+idna==3.6
+OdooRPC==0.10.1
+pyperclip==1.8.2
+urllib3==2.2.1
