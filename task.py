@@ -1,24 +1,30 @@
-from odoorpc import ODOO
+import xmlrpc.client
 
-# Connect to the Odoo server
-from odoorpc.error import RPCError
+# Odoo server information
+server_url = 'http://localhost:8069'  # Replace with your Odoo server URL
+db = 'odoo17'  # Replace with your database name
+username = 'admin'  # Replace with your Odoo username
+password = 'admin'  # Replace with your Odoo password
 
-odoo = ODOO('localhost', port=8069) # Replace with your Odoo server (Domain and Port)
-db_name = 'odoo17' # Replace with your database name
-user = 'admin' # Replace with your Odoo username
-password = 'admin' # Replace with your Odoo password
+# Connect to Odoo via XML-RPC
+common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(server_url))
+uid = common.authenticate(db, username, password, {})
 
-try:
-    # Attempt to login
-    odoo.login(db_name, user, password)
+if uid:
+    models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(server_url))
+
     # Define the fields to be loaded
     fields = ['name', 'user_id', 'amount_total']
 
-    # Load the required models 
-    odoo.env['sale.order']
+    # Search for sales orders
+    order_ids = models.execute_kw(db, uid, password,
+                                  'sale.order', 'search',
+                                  [[]])
 
-    # Retrieve sales orders using a JSON-RPC request
-    orders = odoo.env['sale.order'].search_read([], fields)
+    # Read the sales orders
+    orders = models.execute_kw(db, uid, password,
+                               'sale.order', 'read',
+                               [order_ids], {'fields': fields})
 
     # Process and print the retrieved orders
     if orders:
@@ -29,14 +35,5 @@ try:
             print(f"Order ID: {order_id}, Salesperson: {salesperson}, Total Amount: {total_amount}")
     else:
         print("No sales orders found.")
-
-
-except RPCError as e:
-    # Handle RPC error, typically caused by wrong login credentials
-    print("Authentication failed. Check your database name, user name, or Odoo parameters(domain or port).")
-
-
-
-
-
-
+else:
+    print("Authentication failed. Check your database name, user name, or server url.")
